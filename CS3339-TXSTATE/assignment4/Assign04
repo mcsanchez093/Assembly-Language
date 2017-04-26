@@ -1,0 +1,244 @@
+When factorial is called:
+N = 4
+$sp = 0x7fffeff4 (and N is at 0($sp))
+
+jal Fac
+Moves program counter to Fac label.
+$ra = 0x00400010 (line 12 in main loop).
+
+************* Fac(4) **************
+
+lw $a0, 0 ($sp)
+$a0 = N = 4
+
+addiu $sp, $sp, -16 # Allocate
+$sp = 0x7fffefe4 = 4 words up from N
+
+sw $ra, 12 ($sp) # Save return address
+0x7fffeff0 contains $ra = 0x00400010 (line 12 in main loop)
+
+sw $a0, 8 ($sp)
+0x7fffefec contains $a0 = N = 4
+
+slti $t0, $a0, 2
+If $a0 (N) < 2, set $t0 to 1, otherwise set it to 0
+Right now N = 4, so $t0 = 0.
+
+beqz $t0, Go
+If $t0 = 0, branch to Go. This skips the base cases N=1 and N=0.
+Right now $t0 = 0, so we branch to Go.
+
+addi $a0, $a0, -1
+$a0 = N - 1 = 3
+
+sw $a0, 0 ($sp) # Pass N-1 to factorial
+0x7fffefe4 contains $a0 = N-1 = 3
+
+jal Fac # Recursive call
+Moves program counter to Fac label.
+$ra = 0x0040004c (line 33 in factorial).
+
+************* Fac(3) **************
+
+lw $a0, 0 ($sp)
+$a0 = N = 3
+
+addiu $sp, $sp, -16 # Allocate
+$sp = 0x7fffefd4 = 4 words up from new N
+
+sw $ra, 12 ($sp) # Save return address
+0x7fffefe0 contains $ra = 0x0040004c (line 33 in factorial)
+
+sw $a0, 8 ($sp)
+0x7fffefdc contains $a0 = N = 3
+
+slti $t0, $a0, 2
+If $a0 (N) < 2, set $t0 to 1, otherwise set it to 0
+Right now N = 3, so $t0 = 0.
+
+beqz $t0, Go
+If $t0 = 0, branch to Go. This skips the base cases N=1 and N=0.
+Right now $t0 = 0, so we branch to Go.
+
+addi $a0, $a0, -1
+$a0 = N - 1 = 2
+
+sw $a0, 0 ($sp) # Pass N-1 to factorial
+0x7fffefd4 contains $a0 = N-1 = 2
+
+jal Fac # Recursive call
+Moves program counter to Fac label.
+$ra = 0x0040004c (line 33 in factorial).
+
+************* Fac(2) **************
+
+lw $a0, 0 ($sp)
+$a0 = N = 2
+
+addiu $sp, $sp, -16 # Allocate
+$sp = 0x7fffefc4 = 4 words up from new N
+
+sw $ra, 12 ($sp) # Save return address
+0x7fffefd0 contains $ra = 0x0040004c (line 33 in factorial)
+
+sw $a0, 8 ($sp)
+0x7fffefcc contains $a0 = N = 2
+
+slti $t0, $a0, 2
+If $a0 (N) < 2, set $t0 to 1, otherwise set it to 0
+Right now N = 2, so $t0 = 0.
+
+beqz $t0, Go
+If $t0 = 0, branch to Go. This skips the base cases N=1 and N=0.
+Right now $t0 = 0, so we branch to Go.
+
+addi $a0, $a0, -1
+$a0 = N - 1 = 1
+
+sw $a0, 0 ($sp) # Pass N-1 to factorial
+0x7fffefc4 contains $a0 = N-1 = 1
+
+jal Fac # Recursive call
+Moves program counter to Fac label.
+$ra = 0x0040004c (line 33 in factorial).
+
+************* Fac(1) **************
+
+lw $a0, 0 ($sp)
+$a0 = N = 1
+
+addiu $sp, $sp, -16 # Allocate
+$sp = 0x7fffefb4 = 4 words up from new N
+
+sw $ra, 12 ($sp) # Save return address
+0x7fffefc0 contains $ra = 0x0040004c (line 33 in factorial)
+
+sw $a0, 8 ($sp)
+0x7fffefbc contains $a0 = N = 1
+
+slti $t0, $a0, 2
+If $a0 (N) < 2, set $t0 to 1, otherwise set it to 0
+Right now N = 1, so $t0 = 1.
+
+beqz $t0, Go
+If $t0 = 0, branch to Go. This skips the base cases N=1 and N=0.
+Right now $t0 = 1, so do not branch.
+
+li $v0, 1
+$v0 = 1. $v0 is the register where return values are stored.
+
+b facret
+Branch to factorial return label. (Does not set $ra.)
+
+addiu $sp, $sp, 16 # De-allocate
+$sp = 0x7fffefc4 = 4 words down into stack (â€œpopâ€ 4 words)
+
+sw $v0, 4 ($sp)
+0x7fffefc8 = $v0 = return value = 1
+
+jr $ra
+Jump to return address, which is currently 0x0040004c (line 33 in factorial)
+
+************* End Fac(1) **************
+
+lw $v0, 4 ($sp) # Get (N-1) ! back.
+Loads into $v0 from 0x7fffefc8, which contains return value 1.
+$v0 = 1
+
+lw $ra, 12 ($sp)
+Loads into $ra from 0x7fffefd0, which contains 0x0040004c (line 33 in factorial)
+$ra = 0x0040004c
+
+lw $a0, 8 ($sp)
+Loads into $a0 from 0x7fffefcc, which contains this layerâ€™s N = 2.
+$a0 = N = 2
+
+mult $v0, $a0 # N* (N-1) !
+Multiplies return value from previous iteration by N from this iteration.
+Sets $lo to product.
+$lo = $v0*$a0 = (return val)*N = 1*2 = 2
+
+mflo $v0
+$v0 = $lo = 2; $v0 is default register for return value.
+
+addiu $sp, $sp, 16 # De-allocate
+$sp = 0x7fffefd4 = 4 words down into stack (â€œpopâ€ 4 words)
+
+sw $v0, 4 ($sp)
+0x7fffefd8 = $v0 = return value = 2 
+
+jr $ra
+Jump to return address, which is currently 0x0040004c (line 33 in factorial)
+
+************* End Fac(2) **************
+
+lw $v0, 4 ($sp) # Get (N-1) ! back.
+Loads into $v0 from 0x7fffefd8, which contains return value 2.
+$v0 = 2
+
+lw $ra, 12 ($sp)
+Loads into $ra from 0x7fffefe0, which contains 0x0040004c (line 33 in factorial)
+$ra = 0x0040004c
+
+lw $a0, 8 ($sp)
+Loads into $a0 from 0x7fffefdc, which contains this layerâ€™s N = 3.
+$a0 = N = 3
+
+mult $v0, $a0 # N* (N-1) !
+Multiplies return value from previous iteration by N from this iteration.
+Sets $lo to product.
+$lo = $v0*$a0 = (return val)*N = 2*3 = 6
+
+mflo $v0
+$v0 = $lo = 6; $v0 is default register for return value.
+
+addiu $sp, $sp, 16 # De-allocate
+$sp = 0x7fffefe4 = 4 words down into stack (â€œpopâ€ 4 words)
+
+sw $v0, 4 ($sp)
+0x7fffefe8 = $v0 = return value = 6
+
+jr $ra
+Jump to return address, which is currently 0x0040004c (line 33 in factorial)
+
+************* End Fac(3) **************
+
+lw $v0, 4 ($sp) # Get (N-1) ! back.
+Loads into $v0 from 0x7fffefe8, which contains return value 6.
+$v0 = 6
+
+lw $ra, 12 ($sp)
+Loads into $ra from 0x7fffeff0, which contains 0x00400010 (line 12 in main loop)
+$ra = 0x00400010
+
+lw $a0, 8 ($sp)
+Loads into $a0 from 0x7fffefdc, which contains this layerâ€™s N = 4.
+$a0 = N = 4
+
+mult $v0, $a0 # N* (N-1) !
+Multiplies return value from previous iteration by N from this iteration.
+Sets $lo to product.
+$lo = $v0*$a0 = (return val)*N = 6*4 = 24
+
+mflo $v0
+$v0 = $lo = 24; $v0 is default register for return value.
+
+addiu $sp, $sp, 16 # De-allocate
+$sp = 0x7fffeff4 = 4 words down into stack (â€œpopâ€ 4 words).
+This is the original value of the stack pointer register.
+
+sw $v0, 4 ($sp)
+0x7fffeff8 = $v0 = return value = 24
+
+jr $ra
+Jump to return address, which is currently 0x00400010 (line 12 in main loop).
+
+************* End Fac(4) **************
+
+Returns to line after jal Fac in the main loop. Returned value (4! = 24) is in $v0 and $sp(4). 
+
+
+
+
+
+
